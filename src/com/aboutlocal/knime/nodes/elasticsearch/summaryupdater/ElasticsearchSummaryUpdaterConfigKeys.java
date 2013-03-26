@@ -19,6 +19,9 @@ public final class ElasticsearchSummaryUpdaterConfigKeys {
 	
 	public static final String ESIDCOL = "ElasticsearchIdColumn";
 	
+	public static final String CHUNKSIZE = "ChunkSize";
+	
+	public static final String MAXTHREADS = "MaxThreads";
 	
 	private ElasticsearchSummaryUpdaterConfigKeys() { }
 }

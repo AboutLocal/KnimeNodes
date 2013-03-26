@@ -8,10 +8,15 @@ import java.util.Set;
 import org.knime.core.data.StringValue;
 import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
 import org.knime.core.node.defaultnodesettings.DialogComponentColumnNameSelection;
+import org.knime.core.node.defaultnodesettings.DialogComponentNumber;
 import org.knime.core.node.defaultnodesettings.DialogComponentString;
 import org.knime.core.node.defaultnodesettings.DialogComponentStringSelection;
+import org.knime.core.node.defaultnodesettings.SettingsModelIntegerBounded;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
+import com.aboutlocal.knime.nodes.elasticsearch.summaryreader.ElasticsearchSummaryReaderConfigKeys;
+import com.aboutlocal.knime.nodes.elasticsearch.summaryreader.ElasticsearchSummaryReaderNodeModel;
+import com.aboutlocal.knime.nodes.elasticsearch.summaryupdater.ElasticsearchSummaryUpdaterNodeModel.ElasticsearchUpdater;
 import com.aboutlocal.knime.nodes.elasticsearch.utils.ElasticsearchUtils;
 
 /**
@@ -44,7 +49,20 @@ public class ElasticsearchSummaryUpdaterNodeDialog extends
 	public static final SettingsModelString createEsIdColModel() {
 		return new SettingsModelString(ElasticsearchSummaryUpdaterConfigKeys.ESIDCOL, 
 				ElasticsearchSummaryUpdaterNodeModel.DEF_ESIDCOL);
-	}		
+	}
+	
+	public static final SettingsModelIntegerBounded createChunksizeModel() {
+		return new SettingsModelIntegerBounded(ElasticsearchSummaryUpdaterConfigKeys.CHUNKSIZE, 
+				ElasticsearchSummaryUpdaterNodeModel.DEF_CHUNKSIZE, ElasticsearchSummaryUpdaterNodeModel.MIN_CHUNKSIZE,
+				ElasticsearchSummaryUpdaterNodeModel.MAX_CHUNKSIZE);
+	}
+	
+	public static final SettingsModelIntegerBounded createMaxThreadsModel() {
+		return new SettingsModelIntegerBounded(ElasticsearchSummaryUpdaterConfigKeys.MAXTHREADS, 
+				ElasticsearchSummaryUpdaterNodeModel.DEF_MAX_THREADS, 
+				ElasticsearchSummaryUpdaterNodeModel.MIN_MAX_THREADS, 
+				ElasticsearchSummaryUpdaterNodeModel.MAX_MAX_THREADS);
+	}	
 	
 	public ElasticsearchSummaryUpdaterNodeDialog() {
 		ElasticsearchUtils eutils = ElasticsearchUtils.getInstance();
@@ -74,5 +92,14 @@ public class ElasticsearchSummaryUpdaterNodeDialog extends
 		DialogComponentColumnNameSelection dcEsIdCol = new DialogComponentColumnNameSelection(createEsIdColModel(),
     			"Column containing elasticsearch ids", 0, StringValue.class);
     	addDialogComponent(dcEsIdCol);
+    	
+    	
+    	setHorizontalPlacement(true);
+    	
+    	DialogComponentNumber dcChunksize = new DialogComponentNumber(createChunksizeModel(), "Chunk Size", 1000);
+    	addDialogComponent(dcChunksize);
+    	
+    	DialogComponentNumber dcMaxThreads = new DialogComponentNumber(createMaxThreadsModel(), "Max. Threads", 1);
+    	addDialogComponent(dcMaxThreads);
 	}
 }

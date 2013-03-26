@@ -5,6 +5,10 @@ package com.aboutlocal.knime.nodes.elasticsearch.summaryupdater;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.elasticsearch.action.admin.indices.mapping.put.PutMappingResponse;
 import org.elasticsearch.client.Client;
@@ -21,10 +25,13 @@ import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionContext;
 import org.knime.core.node.ExecutionMonitor;
 import org.knime.core.node.InvalidSettingsException;
+import org.knime.core.node.KNIMEConstants;
 import org.knime.core.node.NodeModel;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
+import org.knime.core.node.defaultnodesettings.SettingsModelIntegerBounded;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
+import org.knime.core.util.ThreadPool;
 
 import com.aboutlocal.hypercube.domain.summary.data.ElasticsearchSummary;
 import com.aboutlocal.hypercube.domain.summary.elasticsearch.SummaryIndexHelper;
@@ -46,6 +53,18 @@ public class ElasticsearchSummaryUpdaterNodeModel extends NodeModel {
 	
 	public static final String DEF_ESIDCOL = "uuid";
 	
+	public static final int DEF_MAX_THREADS = 4;
+	
+	public static final int MIN_MAX_THREADS = 1;
+	
+	public static final int MAX_MAX_THREADS = 1000;
+	
+	public static final int DEF_CHUNKSIZE = 5000;
+	
+	public static final int MAX_CHUNKSIZE = Integer.MAX_VALUE;
+			
+	public static final int MIN_CHUNKSIZE = 100;
+	
 	
 	private SummaryIndexHelper sih = ElasticsearchUtils.getInstance().getSummaryIndexHelper();
 	
@@ -58,6 +77,10 @@ public class ElasticsearchSummaryUpdaterNodeModel extends NodeModel {
 	private SettingsModelString valueColModel = ElasticsearchSummaryUpdaterNodeDialog.createValueColModel();
 	
 	private SettingsModelString esIdColModel = ElasticsearchSummaryUpdaterNodeDialog.createEsIdColModel();
+	
+	private SettingsModelIntegerBounded chunkSizeModel = ElasticsearchSummaryUpdaterNodeDialog.createChunksizeModel();
+	
+	private SettingsModelIntegerBounded maxThreadsModel = ElasticsearchSummaryUpdaterNodeDialog.createMaxThreadsModel();
 	
     /**
      * Constructor for the node model.
@@ -112,6 +135,9 @@ public class ElasticsearchSummaryUpdaterNodeModel extends NodeModel {
     	String fieldValueCol = valueColModel.getStringValue();
     	String rootType = ElasticSearchUtils.rootType(new ElasticsearchSummary());
     	
+    	int maxThreads = maxThreadsModel.getIntValue();
+    	int chunkSize = chunkSizeModel.getIntValue();
+    	
     	Client esClient = sih.getClient();
     	exec.checkCanceled();
     	
@@ -164,27 +190,123 @@ public class ElasticsearchSummaryUpdaterNodeModel extends NodeModel {
     				+ " containing values to update!");    		
     	}
     	
+    	final ThreadPool pool = KNIMEConstants.GLOBAL_THREAD_POOL.createSubPool();
+    	final Semaphore semaphore = new Semaphore(maxThreads);
+    	
     	int count = 0;
     	int maxCount = summaries.getRowCount();
+    	List<DataRow> chunk = null;
+    	AtomicInteger currentCount = new AtomicInteger();
     	for (DataRow row : summaries) {
     		count++;
     		exec.checkCanceled();
-    		exec.setProgress((double)count / (double)maxCount, "Updating summary " + count + " of " + maxCount);
     		
-    		String uuid = ((StringValue)row.getCell(uuidColIndx)).getStringValue();
-    		String newValue = ((StringValue)row.getCell(fieldValueColIndx)).getStringValue();
-    		
-    		// quote if string value
-    		if (ElasticsearchType.valueOf(newFieldType).equals(ElasticsearchType.String)) {
-    			newValue = "\"" + newValue + "\"";
+    		if (chunk == null) {
+    			chunk = new ArrayList<DataRow>(chunkSize);
     		}
+    		chunk.add(row);
     		
-    		esClient.prepareUpdate(sih.getSummaryIndex(), rootType, uuid)
-    			.setScript("ctx._source." + newFieldName + "=" + newValue + "").execute().actionGet();
+    		if (chunk.size() >= chunkSize) {
+    			pool.submit(new ElasticsearchUpdater(semaphore, chunk, sih.getSummaryIndex(), uuidColIndx, 
+    					fieldValueColIndx, newFieldType, newFieldName, exec, currentCount, maxCount));
+    			chunk = null;
+    		}
     	}
+
+		if (chunk != null && chunk.size() > 0) {
+			pool.submit(new ElasticsearchUpdater(semaphore, chunk, sih.getSummaryIndex(), uuidColIndx, 
+					fieldValueColIndx, newFieldType, newFieldName, exec, currentCount, maxCount));
+			chunk = null;
+		}
+		
+		pool.waitForTermination();
     	
     	return new BufferedDataTable[]{};
     }
+    
+    class ElasticsearchUpdater implements Runnable {
+
+    	private String index;
+    	
+    	private List<DataRow> rows;
+    	
+    	private Semaphore semaphore;
+    	
+    	private int uuidColIndx;
+    	
+    	private int fieldValueColIndx;
+    	
+    	private String newFieldType;
+    	
+    	private String rootType = ElasticSearchUtils.rootType(new ElasticsearchSummary());
+    	
+    	private String newFieldName;
+    	
+    	private ExecutionContext exec;
+    	
+    	final AtomicInteger progressCounter;
+    	
+    	final int totalRowCount;
+    	
+    	public ElasticsearchUpdater(final Semaphore sem, final List<DataRow> rows, final String index, 
+    			final int uuidColIndex, final int fieldValColIndex, final String fieldType, final String fieldName,
+    			final ExecutionContext exec, final AtomicInteger progressCounter, final int totalRowCount) {
+    		this.semaphore = sem;
+    		this.rows = rows;
+    		
+    		this.index = index;
+    		this.uuidColIndx = uuidColIndex;
+    		this.fieldValueColIndx = fieldValColIndex;
+    		this.newFieldType = fieldType;
+    		this.newFieldName = fieldName;
+    		this.exec = exec;
+    		this.progressCounter = progressCounter;
+    		this.totalRowCount = totalRowCount;
+    	}
+    	
+		/* (non-Javadoc)
+		 * @see java.lang.Runnable#run()
+		 */
+		@Override
+		public void run() {
+			SummaryIndexHelper helper = null;
+			
+			try {
+				exec.checkCanceled();
+				semaphore.acquire();
+				
+				helper = new SummaryIndexHelper();
+				helper.setSummaryIndex(index);
+				Client esClient = helper.getClient();
+				
+				for (DataRow row : rows) {
+					exec.checkCanceled();
+					
+		    		String uuid = ((StringValue)row.getCell(uuidColIndx)).getStringValue();
+		    		String newValue = ((StringValue)row.getCell(fieldValueColIndx)).getStringValue();
+		    		
+		    		// quote if string value
+		    		if (ElasticsearchType.valueOf(newFieldType).equals(ElasticsearchType.String)) {
+		    			newValue = "\"" + newValue + "\"";
+		    		}
+		    		
+		    		esClient.prepareUpdate(sih.getSummaryIndex(), rootType, uuid)
+		    			.setScript("ctx._source." + newFieldName + "=" + newValue + "").execute().actionGet();
+		    		
+		    		int count = progressCounter.addAndGet(1);
+                    exec.setProgress((double)count/(double)totalRowCount, 
+                    		"Updating summary " + count + " of " + totalRowCount);
+				}
+			} catch (CanceledExecutionException e) {
+				
+			} catch (InterruptedException e) {
+				throw new IllegalStateException(e);
+			} finally {
+				semaphore.release();
+			}
+		}
+    }
+    
     
 	/* (non-Javadoc)
 	 * @see org.knime.core.node.NodeModel#saveSettingsTo(org.knime.core.node.NodeSettingsWO)
@@ -196,6 +318,8 @@ public class ElasticsearchSummaryUpdaterNodeModel extends NodeModel {
 		fieldTypeModel.saveSettingsTo(settings);
 		valueColModel.saveSettingsTo(settings);
 		esIdColModel.saveSettingsTo(settings);
+		chunkSizeModel.saveSettingsTo(settings);
+		maxThreadsModel.saveSettingsTo(settings);
 	}
 
 	/* (non-Javadoc)
@@ -209,6 +333,8 @@ public class ElasticsearchSummaryUpdaterNodeModel extends NodeModel {
 		fieldTypeModel.validateSettings(settings);
 		valueColModel.validateSettings(settings);
 		esIdColModel.validateSettings(settings);
+		chunkSizeModel.validateSettings(settings);
+		maxThreadsModel.validateSettings(settings);
 	}
 
 	/* (non-Javadoc)
@@ -222,6 +348,8 @@ public class ElasticsearchSummaryUpdaterNodeModel extends NodeModel {
 		fieldTypeModel.loadSettingsFrom(settings);
 		valueColModel.loadSettingsFrom(settings);
 		esIdColModel.loadSettingsFrom(settings);
+		chunkSizeModel.loadSettingsFrom(settings);
+		maxThreadsModel.loadSettingsFrom(settings);
 	}
 
 	/* (non-Javadoc)
