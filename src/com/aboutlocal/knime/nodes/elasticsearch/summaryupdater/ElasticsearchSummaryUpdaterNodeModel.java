@@ -53,11 +53,11 @@ public class ElasticsearchSummaryUpdaterNodeModel extends NodeModel {
 	
 	public static final String DEF_ESIDCOL = "uuid";
 	
-	public static final int DEF_MAX_THREADS = 4;
+	public static final int DEF_MAX_THREADS = KNIMEConstants.GLOBAL_THREAD_POOL.getMaxThreads() / 2;
 	
 	public static final int MIN_MAX_THREADS = 1;
 	
-	public static final int MAX_MAX_THREADS = 1000;
+	public static final int MAX_MAX_THREADS = KNIMEConstants.GLOBAL_THREAD_POOL.getMaxThreads();
 	
 	public static final int DEF_CHUNKSIZE = 5000;
 	
