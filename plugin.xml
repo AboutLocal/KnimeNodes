@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.0"?>
+<plugin>
+
+   <!-- This is an example for providing an own category 
+      <extension
+         point="org.knime.workbench.repository.categories">
+      <category
+            description="Category containing my nodes"
+            icon="icons/default.png"
+            level-id="myNodes"
+            name="My nodes"
+            path="/"/>
+   </extension>
+   -->
+   
+   <extension
+         point="org.knime.workbench.repository.nodes">
+      <node
+            category-path="AboutLocal"
+            expert-flag="false"
+            factory-class="com.aboutlocal.knime.nodes.elasticsearch.summaryreader.ElasticsearchSummaryReaderNodeFactory"
+            id="com.aboutlocal.knime.nodes.elasticsearch.summaryreader.ElasticsearchSummaryReaderNodeFactory"/>
+      <node
+            category-path="AboutLocal"
+            expert-flag="false"
+            factory-class="com.aboutlocal.knime.nodes.elasticsearch.summaryupdater.ElasticsearchSummaryUpdaterNodeFactory"
+            id="com.aboutlocal.knime.nodes.elasticsearch.summaryupdater.ElasticsearchSummaryUpdaterNodeFactory">
+      </node>
+   </extension>
+   <extension
+         point="org.knime.workbench.repository.categories">
+      <category
+            icon="icons/alpin_small.png"
+            level-id="AboutLocal"
+            name="AboutLocal"
+            path="/">
+      </category>
+   </extension>
+   <extension
+         point="org.knime.product.splashExtension">
+      <splashExtension
+            icon="icons/alpin_splash.png"
+            id="AboutLocal.splashExtension"
+            tooltip="AboutLocal Nodes">
+      </splashExtension>
+   </extension>
+   
+</plugin>

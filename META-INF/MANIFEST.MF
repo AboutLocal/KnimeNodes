@@ -1,0 +1,17 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: AboutLocal extension for KNIME Workbench
+Bundle-SymbolicName: com.aboutlocal.knime;singleton:=true
+Bundle-Version: 1.0.0
+Bundle-ClassPath: elasticsearchuuidreader.jar,
+ libs/spidey-1.0-SNAPSHOT.jar
+Bundle-Activator: com.aboutlocal.knime.AboutLocalNodePlugin
+Bundle-Vendor: Kilian Thiel
+Require-Bundle: org.eclipse.core.runtime,
+ org.knime.workbench.core,
+ org.knime.workbench.repository,
+ org.knime.base,
+ org.knime.product
+Bundle-ActivationPolicy: lazy
+Export-Package: com.aboutlocal.knime.nodes.elasticsearch.summaryreader
+

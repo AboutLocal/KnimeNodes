@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE knimeNode PUBLIC "-//UNIKN//DTD KNIME Node 2.0//EN" "http://www.knime.org/Node.dtd">
+<knimeNode icon="./alpin_small.png" type="Sink">
+    <name>Elasticsearch Summary Updater</name>
+    
+    <shortDescription>
+        Updates field values in summary entries of the specified elasticsearch index.
+    </shortDescription>
+    
+    <fullDescription>
+        <intro>Updates field values in summary entries of the specified elasticsearch index. The values to update
+        must be provided in a column of the input data table. Which column to use can be specified in the dialog of
+        the node. Further more the name and the type of the field of the specified elasticsearch index must be
+        specified. If the field does not exist in index it will be created. Be aware that the type of a field can
+        not be changed in elasticsearch. If the field tp update already exists with a different type than specified
+        in the dialog, the dialog setting will be ignored by elasticsearch. 
+        </intro>
+        
+        <option name="Summary Index">The summary index to query.</option>
+        <option name="Name of the elasticsearch field">The name of the elasticsearch field to update.</option>
+        <option name="Type of the elasticsearch field">The type of the elasticsearch field to create (is considered 
+        only if field does not exist).</option>
+        <option name="Column containing values to update">The column of the input table containing the values
+        to update.</option>
+        <option name="Column containing elasticsearch ids">The column containing the elasticsearch ids of the entries
+        to update. These values are usually uuids of summaries.</option>
+    </fullDescription>
+    
+    <ports>
+        <inPort index="0" name="Summaries">The summaries to update.</inPort>
+    </ports>    
+</knimeNode>

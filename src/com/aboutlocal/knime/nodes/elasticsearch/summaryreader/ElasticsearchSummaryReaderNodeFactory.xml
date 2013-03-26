@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE knimeNode PUBLIC "-//UNIKN//DTD KNIME Node 2.0//EN" "http://www.knime.org/Node.dtd">
+<knimeNode icon="./alpin_small.png" type="Source">
+    <name>Elasticsearch Summary Reader</name>
+    
+    <shortDescription>
+        Queries the specified elasticsearch summary index and retrieves resulting summaries. The server to connect to
+        must be specified in the environment.conf. If the server is located in an external network an open ssh tunnel
+        must exist, other wise the connection can not be estanblished.
+    </shortDescription>
+    
+    <fullDescription>
+        <intro>Queries the specified elasticsearch summary index and retrieves the resulting summaries. The query
+        can be specified in the dialog. In case the query string is empty a "match_all" query is used. The summaries
+        are transformed into a data table containing the same columns as csv summaries. Maximal result size as well
+        as chunk size can be set. 
+        </intro>
+        
+        
+        <option name="Summary Index">The summary index to query.</option>
+        <option name="Elasticsearch Query">The query to set. This query must be a valid elasticsearch query string.
+        Please see lucene query syntax for detailed information.
+        </option>
+        <option name="Max. Results">The maximal number of resulting summaries to retrieve.</option>
+        <option name="Chunk Size">The number of summaries to retrieve in one chunk. Note that if you have limited
+        memory (which may most likely be the case) increase the chunk size carefully. For each chunk a query is
+        send to elasticsearch, meaning that a too small chunk size will result in many queries and thus slow down the
+        retrieving process.</option>
+    </fullDescription>
+    
+    <ports>
+        <outPort index="0" name="Summaries">The resulting summaries.</outPort>
+    </ports>    
+</knimeNode>
