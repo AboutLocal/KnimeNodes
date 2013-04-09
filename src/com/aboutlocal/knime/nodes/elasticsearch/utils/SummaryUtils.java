@@ -17,12 +17,13 @@ import org.knime.core.data.RowKey;
 import org.knime.core.data.def.DefaultRow;
 import org.knime.core.data.def.StringCell;
 
+import com.aboutlocal.hypercube.domain.annotations.KNIME;
 import com.aboutlocal.hypercube.domain.summary.data.CsvOutputSummary;
 import com.aboutlocal.hypercube.io.fs.annotations.CSV;
 import com.aboutlocal.hypercube.util.reflection.ReflectionUtils;
 
 /**
- * @author Kilian Thiel <Kilian.Thiel@about-local.com> © 2013 about:Local GmbH
+ * @author Kilian Thiel <Kilian.Thiel@about-local.com> ï¿½ 2013 about:Local GmbH
  *
  */
 public final class SummaryUtils {
@@ -32,9 +33,12 @@ public final class SummaryUtils {
 		
 		CsvOutputSummary csvSummary = new CsvOutputSummary();
         for (Field f : ReflectionUtils.fieldLookup(csvSummary)) {
-        	String colName = nameOrAnnotation(f);
-        	DataColumnSpecCreator dcsc = new DataColumnSpecCreator(colName, StringCell.TYPE);
-        	colSpecs.add(dcsc.createSpec());
+        	KNIME knimeAnno = f.getAnnotation(KNIME.class);
+        	if (knimeAnno != null && knimeAnno.include()) {
+        		String colName = nameOrAnnotation(f);
+        		DataColumnSpecCreator dcsc = new DataColumnSpecCreator(colName, StringCell.TYPE);
+        		colSpecs.add(dcsc.createSpec());
+        	}
         }
         
         DataColumnSpec[] colSpecArr = colSpecs.toArray(new DataColumnSpec[]{});
@@ -42,8 +46,8 @@ public final class SummaryUtils {
 	}
 	
     private static String nameOrAnnotation(final Field f) {
-        CSV a = f.getAnnotation(CSV.class);
-        if (a == null) {
+        KNIME a = f.getAnnotation(KNIME.class);
+        if (a == null || a.name().isEmpty()) {
             return f.getName();
         }
         return a.name();
@@ -81,10 +85,10 @@ public final class SummaryUtils {
     	cells.add(createStringCell(csvSummary.email2));
     	
     	cells.add(createStringCell(csvSummary.imprintPhone));
-    	cells.add(createStringCell(csvSummary.phone2));
-    	cells.add(createStringCell(csvSummary.phone3));
+    	cells.add(createStringCell(csvSummary.phoneShifted1));
+    	cells.add(createStringCell(csvSummary.phoneShifted2));
     	cells.add(createStringCell(csvSummary.imprintFax));
-    	cells.add(createStringCell(csvSummary.fax2));
+    	cells.add(createStringCell(csvSummary.faxShifted1));
     	
     	cells.add(createStringCell(csvSummary.allSources));
     	cells.add(createStringCell(csvSummary.lastActivityTime));
