@@ -128,6 +128,8 @@ public final class SummaryUtils {
     	cells.add(createStringCell(csvSummary.emailCount));
     	
     	cells.add(createStringCell(csvSummary.sectorScore));
+    	cells.add(createStringCell(csvSummary.sectorOverlapScore));
+    	cells.add(createStringCell(csvSummary.sectorNameScore));
     	cells.add(createStringCell(csvSummary.addressScore));
     	cells.add(createStringCell(csvSummary.completenessScore));
     	cells.add(createStringCell(csvSummary.reachabilityScore));
