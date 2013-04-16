@@ -62,20 +62,27 @@ public final class SummaryUtils {
     	cells.add(createStringCell(csvSummary.mgcUuid));
     	cells.add(createStringCell(csvSummary.mgUuid));
     	
-    	cells.add(createStringCell(csvSummary.totalSummariesInParentCluster));
     	cells.add(createStringCell(csvSummary.companyName));
     	cells.add(createStringCell(csvSummary.affiliateType));
-    	
-    	cells.add(createStringCell(csvSummary.owner1Name));
-    	cells.add(createStringCell(csvSummary.owner2Name));
-    	
+    	cells.add(createStringCell(csvSummary.totalSummariesInParentCluster));
+    
     	cells.add(createStringCell(csvSummary.primarySector));
-    	cells.add(createStringCell(csvSummary.secondarySector));
+    	cells.add(createStringCell(csvSummary.secondarySector));    	
     	
     	cells.add(createStringCell(csvSummary.street));
     	cells.add(createStringCell(csvSummary.numberBlock));
     	cells.add(createStringCell(csvSummary.zip));
-    	cells.add(createStringCell(csvSummary.city));
+    	cells.add(createStringCell(csvSummary.city));    	
+    	
+    	cells.add(createStringCell(csvSummary.phoneShifted1));
+    	cells.add(createStringCell(csvSummary.phoneShifted2));
+    	cells.add(createStringCell(csvSummary.imprintPhone));
+    	
+    	cells.add(createStringCell(csvSummary.faxShifted1));
+    	cells.add(createStringCell(csvSummary.imprintFax));
+    	
+    	cells.add(createStringCell(csvSummary.owner1Name));
+    	cells.add(createStringCell(csvSummary.owner2Name));
     	
     	cells.add(createStringCell(csvSummary.website1));
     	cells.add(createStringCell(csvSummary.website2));
@@ -84,18 +91,13 @@ public final class SummaryUtils {
     	cells.add(createStringCell(csvSummary.email1));
     	cells.add(createStringCell(csvSummary.email2));
     	
-    	cells.add(createStringCell(csvSummary.imprintPhone));
-    	cells.add(createStringCell(csvSummary.phoneShifted1));
-    	cells.add(createStringCell(csvSummary.phoneShifted2));
-    	cells.add(createStringCell(csvSummary.imprintFax));
-    	cells.add(createStringCell(csvSummary.faxShifted1));
-    	
     	cells.add(createStringCell(csvSummary.allSources));
+    	
     	cells.add(createStringCell(csvSummary.lastActivityTime));
     	cells.add(createStringCell(csvSummary.lastActivityDelta));
     	cells.add(createStringCell(csvSummary.lastActivitySource));
-    	
     	cells.add(createStringCell(csvSummary.numMentions));
+    	
     	cells.add(createStringCell(csvSummary.activityIndex));
     	cells.add(createStringCell(csvSummary.activityClusterIndex));
     	
